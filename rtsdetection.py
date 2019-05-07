@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri May  3 13:33:01 2019
-
 @author: n.boichuk
 """
 import os
@@ -29,54 +28,89 @@ def smoothing(data, window = 3):
         averaged_data[i] = y_temp / number
     return averaged_data
 
+def derivative(datax, datay):
+    dydx = np.diff(datay) / np.diff(datax)
+    dx = (np.array(datax)[:-1] + np.array(datax)[1:]) / 2
+    return dx, dydx
+
 
 #try to analize only a part
-current = np.loadtxt("T04_RTS_PBS_5_timetrace_extracted.dat", unpack = True, skiprows = 1)
-x =  6000
-current = current[x:x+1000]
+current = np.loadtxt("T04_RTS_PBS_1_timetrace_extracted.dat", unpack = True, skiprows = 1)
+x =  0
+#cut only when work in IDE
+current = current[x:x+10000]
 Fs = 10000
 time = [i / Fs for i in range(0, len(current))]
 
-averaged_current = smoothing(current, 15)
+averaged_current = smoothing(current, 7)
+smoothcoef = 1
+current = smoothing(current, smoothcoef)
 
 #derivative
-derc = np.diff(current) / np.diff(time)
-dert = (np.array(time)[:-1] + np.array(time)[1:]) / 2
+dert, derc = derivative(time, current)
 
-m = np.mean(current)
-st = np.std(current)
-print(m)
-print(st)
-points = []
-for y in current:
-    if (y - m) > 0:
-        points.append(5e-5)
-    else:
-        #print('yes')
-        points.append(-5e-5)
 
 plt.plot(time, current, 'red')
 plt.plot(time, averaged_current, 'blue')
-dercsmooth = smoothing(derc/0.5e4+20e-5, 1)
-m = np.mean(dercsmooth)
-st = np.std(dercsmooth)
+m = np.mean(derc)
+st = np.std(derc)
+scale = np.std(current) / np.max(derc)
 print(m)
 print(st)
-points = []
-for y in dercsmooth:
+high_der = []
+amplitude = []
+amplheigh = []
+i = 0
+surround = smoothcoef
+for y in derc:
     if abs(y - m) > 3*st:
-        points.append(-5e-5)
+        high_der.append(1)
+        amplitude.append(np.mean(current[i+1:i+1+surround]-current[i-surround:i]))
     else:
-        #print('yes')
-        points.append(-10e-5)
-plt.plot(dert, dercsmooth, 'green')
-plt.plot(time[1:], points, 'g.-')
+        high_der.append(0)
+        amplitude.append(0)
+    i += 1
+high_der = np.array(high_der)
+amplitude = np.array(amplitude)
+for a in amplitude:
+    if a != 0:
+        amplheigh.append(abs(a))
+
+for i in range(0, len(amplitude)):
+    if abs(abs(amplitude[i])-np.mean(amplheigh))>3*np.std(amplheigh):
+        amplitude[i] = 0
+
+last = 0
+i = 0
+
+while i < len(amplitude):
+    if (amplitude[i] != 0):
+        j = i
+        while(amplitude[j] != 0):
+            j += 1
+        max_ampl = max(amplitude[i:j])
+        max_i = np.argmax(amplitude[i:j])+i
+        for k in range(i,j):
+            amplitude[k] = 0
+        amplitude[max_i] = max_ampl
+        i = j
+        continue
+
+    else:
+        i += 1
+
+plt.plot(dert, derc * scale + 9*scale, 'green')
+
+plt.plot(dert, amplitude + 3*scale, 'red')
+
+plt.plot(dert, high_der * scale + 6 * scale, 'g.-')
 plt.show()
 
 
 
 
 '''
+#how to use histogram
 BINS = 30
 plt.hist(averaged_current, bins=BINS)  # arguments are passed to np.histogram
 hist, bin_edges = np.histogram(averaged_current, bins = BINS)
