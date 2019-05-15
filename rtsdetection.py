@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-#D:\Boichuk\PROGRAMMING\RTSanalysis
-#C:\ProgramData\Anaconda3\python.exe rtsdetection.py
 """
 Created on Fri May  3 13:33:01 2019
 @author: n.boichuk
+For console part
+D:
+cd D:\Boichuk\PROGRAMMING\RTSanalysis
+C:\ProgramData\Anaconda3\python.exe rtsdetection.py
 """
 import os
 import matplotlib.pyplot as plt
@@ -46,14 +48,15 @@ def derivative(datax, datay):
 
 
 #try to analize only a part
-current = np.loadtxt("T04_RTS_PBS_5_timetrace_extracted.dat", unpack = True, skiprows = 1)
-start_pos =  0
+filename_to_analyse = "T04_RTS_PBS_13_timetrace_extracted.dat"
+current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1)
+start_pos = 0
 window_size = 2000
 #current = current[start_pos:start_pos + window_size]
 current = smoothing(current,1)
 
 #detect the frequency  #Fs = 10000
-fp = open('T04_RTS_PBS_5_timetrace_extracted.dat', 'r')
+fp = open(filename_to_analyse, 'r')
 line = fp.readline()
 fp.close()
 if line.find('Fs=') == 0:
@@ -76,7 +79,7 @@ st = np.std(derc)
 amplitude = []
 amplheight = []
 i = 0
-surround = 2
+surround = 2 # comparison with the amplitude current values
 threshold_coef_for_detection = 3 # usually I use 3
 for y in derc:
     if abs(y - m) > threshold_coef_for_detection*st:
@@ -132,6 +135,21 @@ for i in range(1, len(amplitude)):
     countlevels[i] = countlevels[i-1] + np.sign(amplitude[i])
 countlevels = np.array(countlevels)
 
+#to form a two-state signal detection levels
+count2levels=[0 for i in range(0, len(countlevels))]
+last = 0 # direction of changes
+for i in range(1, len(countlevels)):
+    delta = countlevels[i] - countlevels[i-1]
+    if delta == 0:
+        count2levels[i] = count2levels[i-1]
+    else:
+        if np.sign(delta) == last:
+            count2levels[i] = count2levels[i-1]
+        else:
+            count2levels[i] = count2levels[i-1] + np.sign(amplitude[i])
+        last = np.sign(amplitude[i])
+count2levels = np.array(count2levels)
+
 #plt.subplot('411')
 plt.plot(time, current, 'red')
 plt.plot(time, averaged_current, 'blue')
@@ -145,9 +163,48 @@ scale = (max(current)-min(current)) /(max(amplitude)-min(amplitude))
 plt.plot(dert, amplitude * scale + 2*shift, 'r*-')
 #plt.subplot('414')
 scale = (max(current)-min(current)) /(max(countlevels)-min(countlevels))
-plt.plot(dert, countlevels * scale - 2* shift, 'b.-')
+plt.plot(dert, countlevels * scale - 1* shift, 'b.-')
+
+scale = (max(current)-min(current)) /(max(count2levels)-min(count2levels))
+plt.plot(dert, count2levels * scale - 3* shift, 'b.-')
 plt.show()
 
+#count2levels is working nicely!
+#withdrow time constants
+
+t1 = list()
+t2 = list()
+lasttimechange = 0
+for i in range(1, len(countlevels)):
+    delta = count2levels[i] - count2levels[i-1]
+    if delta != 0:
+        if np.sign(delta) > 0:
+            t1.append(dert[i] - dert[lasttimechange])
+        else:
+            t2.append(dert[i] - dert[lasttimechange])
+        lasttimechange = i
+
+print(t1)
+print(t2)
+
+BINS = 15
+plt.hist(t1, bins=BINS)  # arguments are passed to np.histogram
+hist, bin_edges = np.histogram(t1, bins = BINS)
+plt.xlim(bin_edges[0], bin_edges[-1])
+#plt.yscale('log')
+EnergyMaxCount = max(hist)
+EnergyMaxIndex = list(hist).index(EnergyMaxCount)
+EnergyMax = (bin_edges[EnergyMaxIndex]+bin_edges[EnergyMaxIndex+1])/2
+plt.show()
+
+plt.hist(t2, bins=BINS)  # arguments are passed to np.histogram
+hist, bin_edges = np.histogram(t2, bins = BINS)
+plt.xlim(bin_edges[0], bin_edges[-1])
+#plt.yscale('log')
+EnergyMaxCount = max(hist)
+EnergyMaxIndex = list(hist).index(EnergyMaxCount)
+EnergyMax = (bin_edges[EnergyMaxIndex]+bin_edges[EnergyMaxIndex+1])/2
+plt.show()
 '''
 f, Pxx = scipy.signal.periodogram(current, 1)
 plt.plot(f[1::], smoothing(Pxx[1::],31))
