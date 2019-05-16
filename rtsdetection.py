@@ -18,7 +18,7 @@ import random
 # my function of smoothing, based on averaging with nearest neighbours
 # in the range of window. If window is too big (for members at the edges)
 # window is adjusted
-def smoothing(data, window = 3):
+def smoothing(data, window = 1):
     #window is only odd
     delta = (window - 1) // 2
     averaged_data = data.copy()
@@ -46,9 +46,18 @@ def derivative(datax, datay):
         dydx[i] = (datay[i+1] - datay[i-1]) / (datax[i+1] - datax[i-1])
     return np.array(dx), np.array(dydx)
 
+def histoplot(data, bins_number = 10):
+    plt.hist(data, bins=bins_number)  # arguments are passed to np.histogram
+    hist, bin_edges = np.histogram(data, bins = bins_number)
+    plt.xlim(bin_edges[0], bin_edges[-1])
+    #plt.yscale('log')
+    dataMaxCount = max(hist)
+    dataMaxIndex = list(hist).index(dataMaxCount)
+    dataMax = (bin_edges[dataMaxIndex]+bin_edges[dataMaxIndex+1])/2
+    plt.show()
 
 #try to analize only a part
-filename_to_analyse = "T04_RTS_PBS_13_timetrace_extracted.dat"
+filename_to_analyse = "T04_RTS_LG_100ug-cTnI_15_timetrace_extracted.dat"
 current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1)
 start_pos = 0
 window_size = 2000
@@ -184,45 +193,16 @@ for i in range(1, len(countlevels)):
             t2.append(dert[i] - dert[lasttimechange])
         lasttimechange = i
 
-print(t1)
-print(t2)
+BINS = 20
+histoplot(t1, BINS)
+histoplot(t2, BINS)
 
-BINS = 15
-plt.hist(t1, bins=BINS)  # arguments are passed to np.histogram
-hist, bin_edges = np.histogram(t1, bins = BINS)
-plt.xlim(bin_edges[0], bin_edges[-1])
-#plt.yscale('log')
-EnergyMaxCount = max(hist)
-EnergyMaxIndex = list(hist).index(EnergyMaxCount)
-EnergyMax = (bin_edges[EnergyMaxIndex]+bin_edges[EnergyMaxIndex+1])/2
-plt.show()
-
-plt.hist(t2, bins=BINS)  # arguments are passed to np.histogram
-hist, bin_edges = np.histogram(t2, bins = BINS)
-plt.xlim(bin_edges[0], bin_edges[-1])
-#plt.yscale('log')
-EnergyMaxCount = max(hist)
-EnergyMaxIndex = list(hist).index(EnergyMaxCount)
-EnergyMax = (bin_edges[EnergyMaxIndex]+bin_edges[EnergyMaxIndex+1])/2
-plt.show()
-'''
-f, Pxx = scipy.signal.periodogram(current, 1)
+plt.subplot('211')
+f, Pxx = scipy.signal.periodogram(current, Fs)
 plt.plot(f[1::], smoothing(Pxx[1::],31))
 plt.xscale('log')
 plt.yscale('log')
+plt.grid(True)
+plt.subplot('212')
+plt.plot(time, current)
 plt.show()
-'''
-
-#idea to use 
-#how to use histogram
-
-'''
-BINS = 100
-plt.hist(amplheight, bins=BINS)  # arguments are passed to np.histogram
-hist, bin_edges = np.histogram(amplheight, bins = BINS)
-plt.xlim(bin_edges[0], bin_edges[-1])
-EnergyMaxCount = max(hist)
-EnergyMaxIndex = list(hist).index(EnergyMaxCount)
-EnergyMax = (bin_edges[EnergyMaxIndex]+bin_edges[EnergyMaxIndex+1])/2
-plt.show()
-'''
