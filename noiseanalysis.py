@@ -29,6 +29,19 @@ def derivative(datax, datay):
         dydx[i] = (datay[i+1] - datay[i-1]) / (datax[i+1] - datax[i-1])
     return np.array(dx), np.array(dydx)
 
+
+def readTimeTrace(filename_to_analyse):
+    current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1)
+    fp = open(filename_to_analyse, 'r')
+    line = fp.readline()
+    fp.close()
+    Fs = 1
+    if line.find('Fs=') == 0:
+        frequency = line[3:]
+        Fs = float(frequency)
+    time = [i / Fs for i in range(0, len(current))]
+    return time, current
+
 def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighbour = 1):
     
     #start_pos = 0

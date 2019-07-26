@@ -2,11 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.backend_bases
 from matplotlib.widgets import Slider, Button
 import numpy as np
-
+import os
 #https://www.youtube.com/watch?v=pTrfnHleY0U
-from noiseanalysis import RTSanalysis2lvl
+from noiseanalysis import RTSanalysis2lvl, readTimeTrace
 
 win_size = 0.1
+file_path = ''
 
 def on_press(event):
     global win_size
@@ -68,28 +69,52 @@ def val_update(val):
 def open_file(event):
     global y
     global x
+    global file_path
     import tkinter as tk
     from tkinter import filedialog
     root = tk.Tk()
     root.withdraw()
     file_path = filedialog.askopenfilename()
     if (file_path == ''): return
-    y = np.loadtxt(file_path, unpack = True, skiprows = 1)
-    fp = open(file_path, 'r')
-    line = fp.readline()
-    fp.close()
-    if line.find('Fs=') == 0:
-        frequency = line[3:]
-        Fs = float(frequency)
-    #add timeline
-    x = [i / Fs for i in range(0, len(y))]
+    x, y = readTimeTrace(file_path)
     dilution = int(len(y)/10000) + 1
     axTimeTrace.clear()
     axTimeTrace.plot(x[::dilution],y[::dilution])
     val_update(event)
    
 def run_alalysis(event):
-    pass
+    folder = file_path[:-4]
+    try:
+        os.mkdir(folder)
+    except:
+        pass
+    t1 = list()
+    t2 = list()
+    lasttimechange = 0
+    count2levels = RTSanalysis2lvl(x, y, coefNeighbour = int(sl3AmpWin.val), 
+                    coefThreshold = sl2Threshold.val,
+                    coefSmooth = int(sl4Smooth.val))
+    for i in range(1, len(count2levels)):
+        delta = count2levels[i] - count2levels[i-1]
+        if delta != 0:
+            if np.sign(delta) > 0:
+                t1.append(x[i] - x[lasttimechange])
+            else:
+                t2.append(x[i] - x[lasttimechange])
+            lasttimechange = i
+                
+    with open(folder + '/Time1.dat', 'w') as f:
+        f.write("Averaged = %s\n" % np.mean(t1))
+        for item in t1:
+            f.write("%s\n" % item)
+    with open(folder + '/Time2.dat', 'w') as f:
+        f.write("Averaged = %s\n" % np.mean(t2))
+        for item in t2:
+            f.write("%s\n" % item)  
+    with open(folder + '/Binary.dat', 'w') as f:
+        for item in count2levels:
+            f.write("%s\n" % item) 
+    print('ready')
 
 y = []
 x = []
