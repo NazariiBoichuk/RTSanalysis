@@ -42,7 +42,7 @@ def readTimeTrace(filename_to_analyse):
     time = [i / Fs for i in range(0, len(current))]
     return time, current
 
-def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighbour = 1):
+def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighbour = 1, forceM = 0, forceSt = 0):
     
     #start_pos = 0
     #window_size = 2000
@@ -56,8 +56,12 @@ def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighb
     
     #detect jumps comparing the derivatives. When too high - jumps is detected
     #feel amplitude with the size of jump in absolute units
-    m = np.mean(derc)
-    st = np.std(derc)
+    if (forceM == 0 and forceSt == 0):
+        m = np.mean(derc)
+        st = np.std(derc)
+    else:
+        m = forceM
+        st = forceSt
     #st does not change a lot if you have enough point, let us say more than 1000
     #if the signal is stationar. AND RTS is
 

@@ -4,10 +4,12 @@ from matplotlib.widgets import Slider, Button
 import numpy as np
 import os
 #https://www.youtube.com/watch?v=pTrfnHleY0U
-from noiseanalysis import RTSanalysis2lvl, readTimeTrace
+from noiseanalysis import RTSanalysis2lvl, readTimeTrace, derivative
 
 win_size = 0.1
 file_path = ''
+mean = 0
+stdev = 0
 
 def on_press(event):
     global win_size
@@ -55,8 +57,8 @@ def val_update(val):
         right = i
         x_temp = x[left:right]
         y_temp = y[left:right]
-        x_temp = x
-        y_temp = y
+        #x_temp = x
+        #sy_temp = y
         axZoom.plot(x_temp,y_temp)   
         if (len(x_temp) > 1):
             axZoom.plot(x_temp,
@@ -64,7 +66,9 @@ def val_update(val):
                                          y_temp,
                                          coefNeighbour = int(sl3AmpWin.val), 
                                          coefThreshold = sl2Threshold.val,
-                                         coefSmooth = int(sl4Smooth.val)
+                                         coefSmooth = int(sl4Smooth.val),
+                                         forceM = mean,
+                                         forceSt = stdev
                                          )- 0.5)*(max(y)-min(y)) + np.mean(y))
     plt.draw()
 
@@ -72,6 +76,8 @@ def open_file(event):
     global y
     global x
     global file_path
+    global mean
+    global stdev
     import tkinter as tk
     from tkinter import filedialog
     root = tk.Tk()
@@ -82,6 +88,10 @@ def open_file(event):
     dilution = int(len(y)/10000) + 1
     axTimeTrace.clear()
     axTimeTrace.plot(x[::dilution],y[::dilution])
+
+    dert, derc = derivative(time, current)
+    mean = np.mean(derc)
+    stdev = np.std(derc)
     val_update(event)
    
 def run_alalysis(event):
