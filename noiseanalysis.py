@@ -62,7 +62,6 @@ def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighb
     #if the signal is stationar. AND RTS is
 
     amplitude = []
-    amplheight = []
     i = 0
     surround = coefNeighbour # comparison with the amplitude current values
     threshold_coef_for_detection = coefThreshold # usually I use 3
@@ -88,6 +87,7 @@ def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighb
     
     #detect only jumps amplitudes in absolute values
     #leave only high amplitudes
+    amplheight = []
     for a in amplitude:
         if a != 0:
             amplheight.append(abs(a))

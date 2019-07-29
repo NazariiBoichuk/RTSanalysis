@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+Prototype
 Created on Fri May  3 13:33:01 2019
 @author: n.boichuk
 For console part

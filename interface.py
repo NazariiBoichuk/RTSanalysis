@@ -55,6 +55,8 @@ def val_update(val):
         right = i
         x_temp = x[left:right]
         y_temp = y[left:right]
+        x_temp = x
+        y_temp = y
         axZoom.plot(x_temp,y_temp)   
         if (len(x_temp) > 1):
             axZoom.plot(x_temp,
@@ -102,7 +104,22 @@ def run_alalysis(event):
             else:
                 t2.append(x[i] - x[lasttimechange])
             lasttimechange = i
-                
+    
+    #plot histograms quickly
+    bins_number = 30
+    plt.figure('Time1')
+    plt.hist(t1, bins=bins_number)  # arguments are passed to np.histogram
+    hist, bin_edges = np.histogram(t1, bins = bins_number)
+    plt.xlim(bin_edges[0], bin_edges[-1])
+    plt.yscale('log')
+    plt.savefig(folder + '/time1dist.png', dpi = 300)
+    plt.figure('Time2')
+    plt.hist(t2, bins=bins_number)  # arguments are passed to np.histogram
+    hist, bin_edges = np.histogram(t2, bins = bins_number)
+    plt.xlim(bin_edges[0], bin_edges[-1])
+    plt.yscale('log')
+    plt.savefig(folder + '/time2dist.png', dpi = 300)
+    
     with open(folder + '/Time1.dat', 'w') as f:
         f.write("Averaged = %s\n" % np.mean(t1))
         for item in t1:
