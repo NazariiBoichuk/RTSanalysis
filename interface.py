@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.backend_bases
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button, CheckButtons
 import numpy as np
 import os
 #https://www.youtube.com/watch?v=pTrfnHleY0U
@@ -59,7 +59,11 @@ def val_update(val):
         y_temp = y[left:right]
         #x_temp = x
         #sy_temp = y
-        axZoom.plot(x_temp,y_temp)   
+        axZoom.plot(x_temp,y_temp)
+        if (checkShift.get_status()[0] == True):
+            shiftCoef = 1
+        else:
+            shiftCoef =-1
         if (len(x_temp) > 1):
             axZoom.plot(x_temp,
                         (RTSanalysis2lvl(x_temp,
@@ -69,7 +73,7 @@ def val_update(val):
                                          coefSmooth = int(sl4Smooth.val),
                                          forceM = mean,
                                          forceSt = stdev
-                                         )- 0.5)*(max(y)-min(y)) + np.mean(y))
+                                         )+ shiftCoef * 0.5)*(max(y)-min(y)) + np.mean(y))
     plt.draw()
 
 def open_file(event):
@@ -84,12 +88,13 @@ def open_file(event):
     root.withdraw()
     file_path = filedialog.askopenfilename()
     if (file_path == ''): return
+    mainFig.suptitle(file_path)
     x, y = readTimeTrace(file_path)
     dilution = int(len(y)/10000) + 1
     axTimeTrace.clear()
     axTimeTrace.plot(x[::dilution],y[::dilution])
 
-    dert, derc = derivative(time, current)
+    dert, derc = derivative(x, y)
     mean = np.mean(derc)
     stdev = np.std(derc)
     val_update(event)
@@ -131,11 +136,11 @@ def run_alalysis(event):
     plt.savefig(folder + '/time2dist.png', dpi = 300)
     
     with open(folder + '/Time1.dat', 'w') as f:
-        f.write("Averaged = %s\n" % np.mean(t1))
+        f.write("Averaged = %s Std = %s Sterror = %s\n" % (np.mean(t1), np.std(t1), np.std(t1)/np.sqrt(len(t1))))
         for item in t1:
             f.write("%s\n" % item)
     with open(folder + '/Time2.dat', 'w') as f:
-        f.write("Averaged = %s\n" % np.mean(t2))
+        f.write("Averaged = %s Std = %s Sterror = %s\n" % (np.mean(t2), np.std(t2), np.std(t1)/np.sqrt(len(t1))))
         for item in t2:
             f.write("%s\n" % item)  
     with open(folder + '/Binary.dat', 'w') as f:
@@ -145,8 +150,8 @@ def run_alalysis(event):
 
 y = []
 x = []
+
 mainFig = plt.figure()
-mainFig.suptitle('Click the position on timetrace for zooming in')
 axTimeTrace = mainFig.add_subplot(211)
 axZoom = mainFig.add_subplot(212)
 plt.subplots_adjust(left=0.1, bottom=0.4, right = 0.9, top = 0.9)
@@ -195,6 +200,9 @@ buttonOpen = Button(openax, 'Open', color='green', hovercolor='0.975')
 runax = plt.axes([0.8, 0.9, 0.1, 0.04])
 buttonRun = Button(runax, 'Run', color='yellow', hovercolor='0.5')
 
+axCheckShift = plt.axes([0.9, 0.4, 0.08, 0.20])
+checkShift = CheckButtons(axCheckShift, ['Shift'], [True])
+
 mainFig.canvas.mpl_connect('button_press_event', on_press)
 sl1ZoomSize.on_changed(zoom_update)
 sl2Threshold.on_changed(val_update)
@@ -202,5 +210,6 @@ sl3AmpWin.on_changed(val_update)
 sl4Smooth.on_changed(val_update)
 buttonOpen.on_clicked(open_file)
 buttonRun.on_clicked(run_alalysis)
+checkShift.on_clicked(val_update)
 
 plt.show()
