@@ -10,36 +10,61 @@ win_size = 0.1
 file_path = ''
 mean = 0
 stdev = 0
+selection = None
 
 def on_press(event):
     global win_size
+    global selection
     print('you pressed', event.button, event.xdata, event.ydata)
     if (event.inaxes == axTimeTrace):
         axZoom.set_xlim(event.xdata - win_size/2,event.xdata + win_size/2)
         mainFig.canvas.flush_events()
         event.canvas.draw()
+        
+        #selection
+        try:
+            selection.remove()
+        except:
+            print('nothing was selected before')
+        selection = axTimeTrace.axvspan(event.xdata - win_size/2, event.xdata + win_size/2, color='red', alpha=0.5)
+        
         val_update(event)
     if (event.inaxes == axZoom):
         axZoom.set_xlim(event.xdata - win_size/2,event.xdata + win_size/2)
         mainFig.canvas.flush_events()
         event.canvas.draw()
 
+        #selection
+        try:
+            selection.remove()
+        except:
+            print('nothing was selected before')
+        selection = axTimeTrace.axvspan(event.xdata - win_size/2, event.xdata + win_size/2, color='red', alpha=0.5)
+
 def zoom_update(val):
     global win_size
     global x
     global y
-    win_size = 10 ** sl1ZoomSize.val / 1000
+    global selection
+    win_size = 10 ** sl1ZoomSize.val / 200
     x1, x2 = axZoom.get_xlim()
     xav = x1/2+x2/2
     x1 = xav - win_size/2
     x2 = xav + win_size/2
     axZoom.set_xlim(x1, x2)
+
+    #selection
+    try:
+        selection.remove()
+    except:
+        print('nothing was selected before')
+    selection = axTimeTrace.axvspan(x1, x2, color='red', alpha=0.5)
              
 def val_update(val):
     global win_size
     global x
     global y
-    win_size = 10 ** sl1ZoomSize.val / 1000
+    win_size = 10 ** sl1ZoomSize.val / 200
     x1, x2 = axZoom.get_xlim()
     xav = x1/2+x2/2
     x1 = xav - win_size/2
@@ -162,7 +187,7 @@ sl1ZoomSize = Slider(ax = axSliderZoomSize,
              valmin = 0.001,
              valmax = 3,
              valinit=2.5,
-             valfmt='%1.2f',
+             valfmt='%1.3f',
              closedmax=True)
 
 axSliderThreshold = plt.axes([0.2, 0.21, 0.7, 0.03])
@@ -171,7 +196,7 @@ sl2Threshold = Slider(ax = axSliderThreshold,
                       valmin = 0.5, 
                       valmax = 5,
                       valinit = 2,
-                      valfmt = '%1.2f',
+                      valfmt = '%1.3f',
                       closedmax = True)
 
 axSliderAmpWin = plt.axes([0.2, 0.17, 0.7, 0.03])
