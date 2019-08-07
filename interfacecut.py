@@ -189,15 +189,16 @@ def run_alalysis(event):
     global file_path
     global createNew
     print(createNew)
+    filep = file_path
     if (createNew):
         now = datetime.now()
         dt_string = now.strftime("%m%d%H%M%S")
-        file_path = file_path[:-4] + dt_string + '.dat'
-        with open(file_path, 'w') as datfile:
+        filep = file_path[:-4] + dt_string + '.dat'
+        with open(filep, 'w') as datfile:
             writer = csv.writer(datfile, delimiter='\t')
-            writer.writerows(zip(x, y))
+            writer.writerows(zip(y, x))
             print('Slicing data for as finished')
-    folder = file_path[:-4]
+    folder = filep[:-4]
     try:
         os.mkdir(folder)
     except:
