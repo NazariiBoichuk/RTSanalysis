@@ -1,8 +1,32 @@
+'''
+Module that contains all necessary function for mathematical analysis
+of noise
+'''
 import numpy as np
 #https://www.youtube.com/watch?v=pTrfnHleY0U
 
 def smoothing(data, window = 1):
-    #window is only odd
+    '''
+    smoothing(data, window)
+
+    Smooth the data using averaging with nearest points
+
+    Parameters
+    ----------
+    data : list or numpy.array
+        Contains the sequence of number that will be smoothed by averaging
+        with nearest points in range of `window`
+    window : int, optional
+        Number of point that are used for averaging for particular point in
+        the middle of this range (the default is 1, which does not change
+        the data)
+    Returns
+    -------
+    list or array
+        Smoothed data
+    '''
+    #window is supposed to be odd because of symetry for both sides up and
+    #down
     delta = (window - 1) // 2
     averaged_data = data.copy()
     for i in range(0, len(data)):
@@ -16,18 +40,32 @@ def smoothing(data, window = 1):
     return averaged_data
 
 def derivative(datax, datay):
+    '''
+    derivative(datax, datay)
+
+    Find a first order derivative by symethrical formula and special
+
+    Parameters
+    ----------
+    datax : list or numpy.array
+        x-axis data 
+    datay : list or numpy array
+        y-axis data 
+    Returns
+    -------
+    y(x) as data for plotting
+    '''
     #first method going forward
     #dydx = np.diff(datay) / np.diff(datax)
     #dx = (np.array(datax)[:-1] + np.array(datax)[1:]) / 2
     
     #second method combining symethrical formula + for edges
-    dx = datax
     dydx = [0 for i in range(0, len(datay))]
     dydx[0] = (datay[1] - datay[0]) / (datax[1] - datax[0])
     dydx[-1] = (datay[-1] - datay[-2]) / (datax[-1] - datax[-2])
     for i in range (1, len(datay)-1):
         dydx[i] = (datay[i+1] - datay[i-1]) / (datax[i+1] - datax[i-1])
-    return np.array(dx), np.array(dydx)
+    return np.array(datax), np.array(dydx)
 
 
 def readTimeTrace(filename_to_analyse):
@@ -43,25 +81,19 @@ def readTimeTrace(filename_to_analyse):
     return time, current
 
 def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighbour = 1, forceM = 0, forceSt = 0):
-    
-    #start_pos = 0
-    #window_size = 2000
-    #current = current[start_pos:start_pos + window_size]
-    #time =  time[start_pos:start_pos + window_size]
     current = smoothing(current, coefSmooth)
-    #averaged_current = smoothing(current, 11)
-    
-    #derivative
     dert, derc = derivative(time, current)
-    
-    #detect jumps comparing the derivatives. When too high - jumps is detected
-    #feel amplitude with the size of jump in absolute units
+
+    #use forced 
     if (forceM == 0 and forceSt == 0):
         m = np.mean(derc)
         st = np.std(derc)
     else:
         m = forceM
         st = forceSt
+
+    #detect jumps comparing the derivatives. When too high - jumps is detected
+    #feel amplitude with the size of jump in absolute units
     #st does not change a lot if you have enough point, let us say more than 1000
     #if the signal is stationar. AND RTS is
 
