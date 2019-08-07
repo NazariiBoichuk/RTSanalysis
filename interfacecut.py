@@ -5,6 +5,8 @@ import numpy as np
 import os
 #https://www.youtube.com/watch?v=pTrfnHleY0U
 from noiseanalysis import RTSanalysis2lvl, readTimeTrace, derivative, smoothing
+from datetime import datetime
+import csv
 
 win_size = 0.1
 file_path = ''
@@ -13,6 +15,7 @@ stdev = 0
 selection_area = None
 cutX1 = 0
 cutX2 = 0
+createNew = False
 
 def on_press(event):
     global win_size
@@ -54,6 +57,7 @@ def on_press(event):
 def on_release(event):
     global cutX1, cutX2
     global x, y 
+    global createNew
     print(event.button, event.xdata, event.ydata)
     if (cutRegime.get_status()[0] == True and (event.inaxes == axTimeTrace or event.inaxes == axZoom)):
         print(event.xdata, 'for cutting end')
@@ -84,11 +88,12 @@ def on_release(event):
             posEnd = None
             if posToCutRight == len(x) - 1:
                 posEnd = -1
-
+            createNew = True
             x = np.concatenate((x[:posToCutLeft],x[posToCutRight:posEnd]))
             y = np.concatenate((y[:posToCutLeft],y[posToCutRight:posEnd]))
             print('len', len(x), len(y))
             print('end - ', x[-1])
+            print('createNew',createNew)
             dilution = int(len(y)/10000) + 1
             axTimeTrace.clear()
             axTimeTrace.plot(x[::dilution],y[::dilution])
@@ -170,6 +175,7 @@ def open_file(event):
     if (file_path == ''): return
     mainFig.suptitle(file_path)
     x, y = readTimeTrace(file_path)
+    createNew = False
     dilution = int(len(y)/10000) + 1
     axTimeTrace.clear()
     axTimeTrace.plot(x[::dilution],y[::dilution])
@@ -180,6 +186,17 @@ def open_file(event):
     val_update(event)
    
 def run_alalysis(event):
+    global file_path
+    global createNew
+    print(createNew)
+    if (createNew):
+        now = datetime.now()
+        dt_string = now.strftime("%m%d%H%M%S")
+        file_path = file_path[:-4] + dt_string + '.dat'
+        with open(file_path, 'w') as datfile:
+            writer = csv.writer(datfile, delimiter='\t')
+            writer.writerows(zip(x, y))
+            print('Slicing data for as finished')
     folder = file_path[:-4]
     try:
         os.mkdir(folder)
@@ -202,19 +219,21 @@ def run_alalysis(event):
     
     #plot histograms quickly
     bins_number = 30
+
     plt.figure('Time1')
     plt.hist(t1, bins=bins_number)  # arguments are passed to np.histogram
     hist, bin_edges = np.histogram(t1, bins = bins_number)
     plt.xlim(bin_edges[0], bin_edges[-1])
     plt.yscale('log')
     plt.savefig(folder + '/time1dist.png', dpi = 300)
+    plt.clf()
     plt.figure('Time2')
     plt.hist(t2, bins=bins_number)  # arguments are passed to np.histogram
     hist, bin_edges = np.histogram(t2, bins = bins_number)
     plt.xlim(bin_edges[0], bin_edges[-1])
     plt.yscale('log')
     plt.savefig(folder + '/time2dist.png', dpi = 300)
-    
+    plt.clf()
     with open(folder + '/Time1.dat', 'w') as f:
         f.write("Averaged = %s Std = %s Sterror = %s\n" % (np.mean(t1), np.std(t1), np.std(t1)/np.sqrt(len(t1))))
         for item in t1:

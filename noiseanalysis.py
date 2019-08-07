@@ -69,6 +69,11 @@ def derivative(datax, datay):
 
 
 def readTimeTrace(filename_to_analyse):
+    '''
+    Special function to read the time trace file. It is supposed to have a file
+    that begins with head of Fs= which tells that sampling frequency and folowed
+    by the sequence of numbers
+    '''
     current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1)
     fp = open(filename_to_analyse, 'r')
     line = fp.readline()
@@ -84,7 +89,7 @@ def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighb
     current = smoothing(current, coefSmooth)
     dert, derc = derivative(time, current)
 
-    #use forced 
+    #use forced mean and std value if needed (used in interface mode)
     if (forceM == 0 and forceSt == 0):
         m = np.mean(derc)
         st = np.std(derc)
