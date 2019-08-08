@@ -74,7 +74,7 @@ def readTimeTrace(filename_to_analyse):
     that begins with head of Fs= which tells that sampling frequency and folowed
     by the sequence of numbers
     '''
-    current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1)
+    current = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1, usecols=(0))
     fp = open(filename_to_analyse, 'r')
     line = fp.readline()
     fp.close()
@@ -82,7 +82,13 @@ def readTimeTrace(filename_to_analyse):
     if line.find('Fs=') == 0:
         frequency = line[3:]
         Fs = float(frequency)
-    time = [i / Fs for i in range(0, len(current))]
+        time = [i / Fs for i in range(0, len(current))]
+    else:
+        try:
+            time = np.loadtxt(filename_to_analyse, unpack = True, skiprows = 1, usecols=(1))
+        except:
+            print('No second column in the file')
+            time = [i / Fs for i in range(0, len(current))]
     return time, current
 
 def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighbour = 1, forceM = 0, forceSt = 0):
@@ -187,15 +193,6 @@ def RTSanalysis2lvl(time, current, coefSmooth = 1, coefThreshold = 3, coefNeighb
     return count2levels
 
 if __name__ == '__main__':
-    y = np.loadtxt('T17_Noise_LG_After_plasma_21_timetrace_extracted.dat', unpack = True, skiprows = 1)
-    y = y [:10000]
-    fp = open('T17_Noise_LG_After_plasma_21_timetrace_extracted.dat', 'r')
-    line = fp.readline()
-    fp.close()
-    if line.find('Fs=') == 0:
-        frequency = line[3:]
-        Fs = float(frequency)
-       
-    #add timeline
-    x = [i / Fs for i in range(0, len(y))]
-    RTSanalysis2lvl(x, y)
+    x, y = readTimeTrace('T04_RTS_PBS_14_timetrace_extracted.dat')
+    print(x[0], y[0])
+    input()

@@ -1,1 +1,1 @@
-C:\ProgramData\Anaconda3\python.exe interface.py
+C:\Users\n.boichuk\AppData\Local\Programs\Python\Python37\python interfacecut.py

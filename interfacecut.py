@@ -186,6 +186,7 @@ def open_file(event):
     global file_path
     global mean
     global stdev
+    global createNew
     import tkinter as tk
     from tkinter import filedialog
     root = tk.Tk()
@@ -217,8 +218,11 @@ def run_alalysis(event):
         filep = file_path[:-4] + dt_string + '.dat'
         print('New file', filep, 'was created')
         with open(filep, 'w') as datfile:
-            writer = csv.writer(datfile, delimiter='\t')
-            writer.writerows(zip(y, x))
+            datfile.write('!This file is different from original\n')
+            for i in range(0, len(x)):
+                datfile.write("%s\t%s\n" % (y[i],x[i]))
+        file_path = filep
+        createNew = False
     folder = filep[:-4]
     try:
         os.mkdir(folder)
@@ -264,13 +268,14 @@ def run_alalysis(event):
         for item in t1:
             f.write("%s\n" % item)
     with open(folder + '/Time2.dat', 'w') as f:
-        f.write("Event = %s Averaged = %s Std = %s Sterror = %s\n" % (len(t2), np.mean(t2), np.std(t2), np.std(t1)/np.sqrt(len(t1))))
+        f.write("Event = %s Averaged = %s Std = %s Sterror = %s\n" % (len(t2), np.mean(t2), np.std(t2), np.std(t2)/np.sqrt(len(t2))))
         for item in t2:
             f.write("%s\n" % item)  
     with open(folder + '/Binary.dat', 'w') as f:
+        f.write("Value\tTime\n")
         i = 0
         for item in count2levels:
-            f.write("%s\t%s\n" % (item, x[i]))
+            f.write("%s\t%s\t\n" % (item, x[i]))
             i += 1
     print('Data was stored to', folder)
 
